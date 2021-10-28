@@ -1,0 +1,69 @@
+	SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
+	DEVICE AMSTRADCPC464
+
+	INCLUDE "src/cpc.z80"
+
+code_start	equ $0800
+
+	org code_start
+main:
+    di
+
+    ld hl,palette_main_colors
+    call set_palette
+
+    call cpc_sync_frame
+
+    ; Install interrupt handler
+    ld a,$C3	;; Z80 JP instruction
+    ld hl,int1	;; first function to call
+    ld ($0038),a	;; write JP instruction
+    ld ($0039),hl	;; write address
+
+    ei
+loop:
+    call cpc_wait_vsync
+
+    jr loop
+
+
+set_palette:
+    ld b,PORT_GA
+    ld c,REG_PENR | 0   ; PEN0
+	out (c),c
+    ld c,(hl) : inc hl
+    out (c),c
+    ld c,REG_PENR | 1   ; PEN1
+	out (c),c
+    ld c,(hl) : inc hl
+    out (c),c
+    ld c,REG_PENR | 2   ; PEN2
+	out (c),c
+    ld c,(hl) : inc hl
+    out (c),c
+    ld c,REG_PENR | 3   ; PEN3
+	out (c),c
+    ld c,(hl)
+    out (c),c
+    ret
+
+    INCLUDE "src/int.z80"
+
+
+palette_main_colors:
+    .db REG_INKR_BRIGHT_WHITE
+    .db REG_INKR_BRIGHT_WHITE
+    .db REG_INKR_BRIGHT_WHITE
+    .db REG_INKR_BRIGHT_WHITE
+
+palette_panel_colors:
+    .db REG_INKR_BRIGHT_YELLOW
+    .db REG_INKR_BRIGHT_YELLOW
+    .db REG_INKR_BRIGHT_YELLOW
+    .db REG_INKR_BRIGHT_YELLOW
+
+
+
+    SAVECPCSNA "build/test.sna", code_start
+
+

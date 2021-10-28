@@ -1,0 +1,40 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build SNA",
+            "type": "shell",
+            "command": "../sjasmplus/out/build/x64-Debug/sjasmplus.exe",
+            "args": [
+                "--fullpath",
+                "--lst=build/test.lst",
+                "--sld=build/test.sld.txt",
+                "--lstlab",
+                "--sym=build/test.sym",
+                "src/main.z80"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": {
+                "fileLocation": [
+                    "relative",
+                    "${workspaceRoot}"
+                ],
+                "pattern": {
+                    "regexp": "^(.*)\\((\\d+)\\):\\s+(warning|error):\\s+(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "severity": 3,
+                    "message": 4
+                }
+            },
+            "dependsOn": [
+               // "Build tests"
+            ]
+        }
+    ]
+}

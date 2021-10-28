@@ -1,0 +1,127 @@
+;; order:
+;; int1->int2
+;; int2->int3
+;; int3->int4
+;; int4->int5
+;; int5->int6
+;; int6->int1 (loop back)
+
+;;--------------------------------------------------------------------------------------------
+
+;; this is synchronised to happen 2 HSYNCs after VSYNC
+int1:
+    push hl
+    ld hl,int2				;; we handle int2 next
+    ld ($0039),hl			;; set new interrupt vector address
+
+    push bc
+    ld hl,palette_main_colors
+    call set_palette
+    pop bc
+
+
+    pop hl
+    ei
+    reti
+
+;;--------------------------------------------------------------------------------------------
+
+
+int2:
+    push hl
+    ld hl,int3				;; we handle int3 next
+    ld ($0039),hl			;; set new interrupt vector address
+    pop hl
+    ei
+    reti
+
+;;--------------------------------------------------------------------------------------------
+
+
+int3:
+    push hl
+    ld hl,int4				;; we handle int4 next
+    ld ($0039),hl			;; set new interrupt vector address
+    pop hl
+    ei
+    reti
+
+;;--------------------------------------------------------------------------------------------
+
+
+int4:
+    push hl
+    ld hl,int5				;; we handle int5 next
+    ld ($0039),hl			;; set new interrupt vector address
+    pop hl
+    ei
+    reti
+
+;;--------------------------------------------------------------------------------------------
+
+int5:
+    push hl
+    ld hl,int6				;; we handle int6 next
+    ld ($0039),hl			;; set new interrupt vector address
+
+    push bc
+
+    ld b,$C0
+.wait:
+    djnz .wait
+
+    ld hl,palette_panel_colors
+    call set_palette
+    pop bc
+
+    pop hl
+    ei
+    reti
+
+;;--------------------------------------------------------------------------------------------
+
+int6:
+    push hl
+    ld hl,int1				;; we loop back to int1 next
+    ld ($0039),hl			;; set new interrupt vector address
+    pop hl
+    ei
+    reti
+
+;;--------------------------------------------------------------------------------------------
+
+
+; From: https://cpctech.cpcwiki.de/source/hwint.html
+cpc_sync_frame:
+    di
+    im 1
+    ; if you uncomment out below it works on CPCEC
+    ;ld b,$F7
+    ;ld c,$82
+    ;out (c),c
+    ;; wait vsync (loop passes if VSYNC signal is high = in vsync)
+    ld b,$F5
+.wait1:
+    in a,(c)
+    rra
+    jr nc,.wait1
+;; wait for end of vsync (loop passes when VSYNC signal is low = out of vsync)
+.wait2:
+    in a,(c)
+    rra
+    jr c,.wait2
+;; now wait again for start (because we know we found the end, if we wait for VSYNC to be active
+;; we know it will be the start)
+.wait3:
+    in a,(c)
+    rra
+    jr nc,.wait3
+    ret
+
+cpc_wait_vsync:
+    ld b,$F5
+.wait1:
+    in a,(c)
+    rra
+    jr nc,.wait1
+    ret
